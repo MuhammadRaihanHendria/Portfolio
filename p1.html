@@ -82,6 +82,61 @@
                 <button type="submit" class="grid-cols-1 md:col-span-2 p-2.5 border-0 rounded-md bg-accent text-white font-semibold cursor-pointer transition hover:opacity-90">Kirim Pesan</button>
             </form>
         </section>
+<!-- TODO LIST -->
+<section id="todo" class="mt-4 p-4 bg-card border border-border-custom rounded-xl">
+    <h2 class="text-2xl font-bold mb-3">Todo List Pro</h2>
+
+    <!-- Input -->
+    <div class="flex gap-2 mb-2">
+        <input 
+            type="text" 
+            id="todoInput"
+            placeholder="Masukkan tugas..."
+            class="flex-1 p-2 border border-border-custom rounded-md focus:outline-none"
+        >
+
+        <button 
+            onclick="addTodo()"
+            class="px-4 py-2 bg-accent text-white rounded-md"
+        >
+            Tambah
+        </button>
+    </div>
+
+    <!-- Error -->
+    <p id="errorText" class="text-red-500 text-sm hidden">
+        Input tidak boleh kosong!
+    </p>
+
+    <!-- Filter -->
+   <div class="flex gap-3 mt-4 mb-4">
+
+    <button 
+        onclick="setFilter('all')" 
+        class="px-4 py-2 bg-accent text-white rounded-md hover:opacity-90 transition"
+    >
+        All
+    </button>
+
+    <button 
+        onclick="setFilter('active')" 
+        class="px-4 py-2 bg-accent text-white rounded-md hover:opacity-90 transition"
+    >
+        Active
+    </button>
+
+    <button 
+        onclick="setFilter('completed')" 
+        class="px-4 py-2 bg-accent text-white rounded-md hover:opacity-90 transition"
+    >
+        Completed
+    </button>
+
+</div>
+    <!-- List -->
+    <ul id="todoList" class="space-y-2"></ul>
+</section>
+
     </main>
 
     <footer class="m-4 px-4 py-3 text-center border-t-2 border-border-custom">
@@ -89,5 +144,138 @@
         <p class="text-sm text-gray-600 mt-1">Built with HTML & Tailwind CSS</p>
     </footer>
 
+<script>
+    let todos = JSON.parse(localStorage.getItem("todos")) || [];
+    let filter = "all";
+
+    const todoInput = document.getElementById("todoInput");
+    const todoList = document.getElementById("todoList");
+    const errorText = document.getElementById("errorText");
+
+    // Hapus error saat mengetik
+    todoInput.addEventListener("input", () => {
+        errorText.classList.add("hidden");
+        todoInput.classList.remove("border-red-500");
+    });
+
+    function saveToLocalStorage() {
+        localStorage.setItem("todos", JSON.stringify(todos));
+    }
+
+    function addTodo() {
+        const text = todoInput.value.trim();
+
+        // VALIDASI
+        if (text === "") {
+            errorText.classList.remove("hidden");
+            todoInput.classList.add("border-red-500");
+            return;
+        }
+
+        todos.push({
+            text: text,
+            completed: false
+        });
+
+        todoInput.value = "";
+
+        saveToLocalStorage();
+        renderTodos();
+    }
+
+    function renderTodos() {
+        todoList.innerHTML = "";
+
+        let filteredTodos = todos;
+
+        // FILTER
+        if (filter === "active") {
+            filteredTodos = todos.filter(todo => !todo.completed);
+        }
+
+        if (filter === "completed") {
+            filteredTodos = todos.filter(todo => todo.completed);
+        }
+
+        filteredTodos.forEach((todo, index) => {
+            const li = document.createElement("li");
+
+            li.className =
+    "flex justify-between items-center border border-border-custom p-3 rounded-md bg-white";
+
+            li.innerHTML = `
+    <div class="flex items-center gap-3">
+        <input 
+            type="checkbox"
+            ${todo.completed ? "checked" : ""}
+            onchange="toggleTodo(${index})"
+            class="w-5 h-5 cursor-pointer"
+        >
+
+        <span class="text-lg ${
+            todo.completed
+                ? 'line-through text-gray-400'
+                : 'text-black'
+        }">
+            ${todo.text}
+        </span>
+    </div>
+
+    <div class="flex gap-2">
+        <button 
+            onclick="editTodo(${index})"
+            class="px-3 py-1 bg-yellow-400 text-white rounded-md hover:opacity-90"
+        >
+            Edit
+        </button>
+
+        <button 
+            onclick="deleteTodo(${index})"
+            class="px-3 py-1 bg-red-500 text-white rounded-md hover:opacity-90"
+        >
+            Hapus
+        </button>
+    </div>
+`;
+
+            todoList.appendChild(li);
+        });
+    }
+
+    function toggleTodo(index) {
+        todos[index].completed = !todos[index].completed;
+
+        saveToLocalStorage();
+        renderTodos();
+    }
+
+    function deleteTodo(index) {
+        todos.splice(index, 1);
+
+        saveToLocalStorage();
+        renderTodos();
+    }
+
+    function editTodo(index) {
+        const newText = prompt(
+            "Edit Todo:",
+            todos[index].text
+        );
+
+        if (newText !== null && newText.trim() !== "") {
+            todos[index].text = newText;
+
+            saveToLocalStorage();
+            renderTodos();
+        }
+    }
+
+    function setFilter(newFilter) {
+        filter = newFilter;
+        renderTodos();
+    }
+
+    renderTodos();
+</script>
 </body>
 </html>
